@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>노인맞춤돌봄서비스 일일업무일지 자동 취합 & 기안 시스템</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; padding: 0 !important; color: black !important; }
+      .print-page { border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; max-width: 100% !important; }
+      .print-table th, .print-table td { border: 1px solid #333 !important; }
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen p-3 md:p-6 font-sans">
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- 상단 안내 및 헤더 -->
+    <header class="bg-white border border-slate-200 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+            노인맞춤돌봄서비스
+          </span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+            실시간 자동 취합 기안
+          </span>
+          <span class="text-xs text-rose-600 font-bold">⏰ 매일 17:00 마감</span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">전담사회복지사 일일업무일지 자동 취합 시스템</h1>
+        <p class="text-xs md:text-sm text-slate-600 mt-1">각 담당자가 언제든 업무를 입력하면, 취합 담당자의 수고 없이 5명의 일지가 하나로 자동 완성되어 즉시 기안문으로 출력됩니다.</p>
+      </div>
+
+      <!-- 날짜 선택 및 상단 액션 -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 shadow-xs">
+          <label for="currentLogDate" class="text-xs font-semibold text-slate-600 mr-2">업무일자:</label>
+          <input type="date" id="currentLogDate" onchange="onDateChange()" class="bg-transparent text-sm font-bold text-slate-800 focus:outline-none">
+        </div>
+        <button onclick="copyDraftText()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+          기안문 텍스트 복사
+        </button>
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs shadow-sm transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          결재 문서 인쇄 / PDF
+        </button>
+      </div>
+    </header>
+
+    <!-- 5인 사회복지사 실시간 작성 현황 바 -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm no-print space-y-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          당일 5인 사회복지사 업무 작성 현황
+        </h2>
+        <span id="completionSummary" class="text-xs font-bold text-slate-600">제출 완료 0 / 5명</span>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs" id="workerStatusCards">
+        <!-- JS로 동적 생성 -->
+      </div>
+    </div>
+
+    <!-- 개별 담당자 업무 작성 카드 (어느 때나 수시 작성) -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm no-print">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+            내 일일업무 작성 & 실시간 저장
+          </h2>
+          <p class="text-xs text-slate-500">본인 이름을 선택하고 오늘 수행한 업무를 작성한 뒤 [내 업무 등록]을 누르면 아래 기안문에 즉시 통합 반영됩니다.</p>
+        </div>
+
+        <!-- 본인 이름 탭 선택 -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+          <button onclick="selectWorker('정선미 주임')" class="worker-tab px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-xs transition" data-name="정선미 주임">정선미 주임</button>
+          <button onclick="selectWorker('김은희 사회복지사')" class="worker-tab px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition" data-name="김은희 사회복지사">김은희</button>
+          <button onclick="selectWorker('박희숙 사회복지사')" class="worker-tab px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition" data-name="박희숙 사회복지사">박희숙</button>
+          <button onclick="selectWorker('정주연 사회복지사')" class="worker-tab px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition" data-name="정주연 사회복지사">정주연</button>
+          <button onclick="selectWorker('최태선 사회복지사')" class="worker-tab px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition" data-name="최태선 사회복지사">최태선</button>
+        </div>
+      </div>
+
+      <form id="workerEntryForm" onsubmit="handleWorkerFormSubmit(event)" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          
+          <!-- 금일 주요 수행 업무 -->
+          <div class="md:col-span-6 space-y-1">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-bold text-slate-800">1. 금일 수행 업무 내용 *</label>
+              <span class="text-[11px] text-slate-400">구체적 건수 및 대상 포함</span>
+            </div>
+            <textarea id="inputTodayTask" rows="5" required placeholder="예:&#10;- 생활지원사 복무 점검 및 일일활동일지 확인 (12명)&#10;- 집중관리 대상자 유선 안부확인 및 상담 (이OO 어르신 외 5명)&#10;- 후원 밑반찬 배분 계획 수립 및 전달 수량 배정 (총 45가구)&#10;- 특화서비스 집단프로그램 계획안 검토" class="w-full p-3 border border-slate-300 rounded-xl text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+          </div>
+
+          <!-- 익일 예정 업무 -->
+          <div class="md:col-span-3 space-y-1">
+            <label class="text-xs font-bold text-slate-800">2. 익일 예정 업무</label>
+            <textarea id="inputTomorrowTask" rows="5" placeholder="예:&#10;- 신규 의뢰 대상자 가정방문 초기상담 (2명)&#10;- 생활지원사 주간 간담회 준비&#10;- 서비스제공계획서 결재 기안" class="w-full p-3 border border-slate-300 rounded-xl text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+          </div>
+
+          <!-- 특이사항 및 보고사항 -->
+          <div class="md:col-span-3 space-y-1">
+            <label class="text-xs font-bold text-slate-800">3. 특이사항 및 보고사항</label>
+            <textarea id="inputNotes" rows="5" placeholder="예:&#10;- 박OO 어르신 낙상 위험으로 안전손잡이 지원 연계 요청&#10;- 생활지원사 1명 익일 연차 신청" class="w-full p-3 border border-slate-300 rounded-xl text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+          <div class="text-xs text-slate-500">
+            현재 작성 중인 담당자: <strong class="text-indigo-700" id="currentEditingWorker">정선미 주임</strong>
+            <span id="lastSavedTimeText" class="text-[11px] text-slate-400 ml-2"></span>
+          </div>
+          <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            내 일일업무 등록 (자동 취합)
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ⭐ 실시간 자동 완성 기안 문서 (A4 양식 / 인쇄 및 전자결재 규격) -->
+    <div class="bg-white border border-slate-300 rounded-2xl p-6 md:p-10 shadow-lg print-page print:border-none print:shadow-none space-y-6">
+      
+      <!-- 상단 결재란 및 제목 -->
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 border-b-2 border-slate-900 pb-4">
+        <div>
+          <span class="text-xs font-semibold text-slate-500">문서구분: 일일업무보고</span>
+          <h2 class="text-2xl font-black text-slate-900 tracking-tight mt-1" id="reportTitleDisplay">
+            노인맞춤돌봄서비스 일일업무일지
+          </h2>
+          <div class="text-sm font-semibold text-slate-700 mt-1" id="reportDateSubtitle">
+            2026년 10월 8일 (목요일)
+          </div>
+        </div>
+
+        <!-- 공식 결재란 테이블 -->
+        <div class="self-end md:self-auto">
+          <table class="border-collapse text-center text-xs print-table border border-slate-400">
+            <tbody>
+              <tr>
+                <th rowspan="2" class="bg-slate-100 px-2 py-1 border border-slate-300 font-semibold text-slate-700 w-8">결<br>재</th>
+                <th class="bg-slate-50 px-3 py-1 border border-slate-300 font-medium text-slate-600 w-16">담당</th>
+                <th class="bg-slate-50 px-3 py-1 border border-slate-300 font-medium text-slate-600 w-16">선임</th>
+                <th class="bg-slate-50 px-3 py-1 border border-slate-300 font-medium text-slate-600 w-16">팀장</th>
+                <th class="bg-slate-50 px-3 py-1 border border-slate-300 font-medium text-slate-600 w-16">부장</th>
+                <th class="bg-slate-50 px-3 py-1 border border-slate-300 font-medium text-slate-600 w-16">관장</th>
+              </tr>
+              <tr class="h-12">
+                <td class="border border-slate-300"></td>
+                <td class="border border-slate-300"></td>
+                <td class="border border-slate-300"></td>
+                <td class="border border-slate-300"></td>
+                <td class="border border-slate-300"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 기본 정보 개요 표 -->
+      <table class="w-full text-xs border-collapse print-table border border-slate-300">
+        <tbody>
+          <tr>
+            <th class="bg-slate-100 p-2.5 border border-slate-300 text-left font-bold text-slate-800 w-24">사 업 명</th>
+            <td class="p-2.5 border border-slate-300 text-slate-800">노인맞춤돌봄서비스사업</td>
+            <th class="bg-slate-100 p-2.5 border border-slate-300 text-left font-bold text-slate-800 w-24">작성일자</th>
+            <td class="p-2.5 border border-slate-300 text-slate-800" id="metaReportDate">2026-10-08</td>
+          </tr>
+          <tr>
+            <th class="bg-slate-100 p-2.5 border border-slate-300 text-left font-bold text-slate-800">참여 인력</th>
+            <td class="p-2.5 border border-slate-300 text-slate-800" colspan="3">
+              전담사회복지사 5명 (정선미 주임, 김은희, 박희숙, 정주연, 최태선)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- 5인 사회복지사 일일업무 통합 표 -->
+      <div class="space-y-2">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+          <span>■ 전담사회복지사별 일일 업무 수행 내역</span>
+          <span class="text-xs text-slate-400 font-normal">(실시간 자동 취합됨)</span>
+        </h3>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse print-table border border-slate-300" id="aggregatedTable">
+            <thead>
+              <tr class="bg-slate-100 text-slate-800 font-bold border-b border-slate-300">
+                <th class="p-2.5 border border-slate-300 w-28 text-center">담당자</th>
+                <th class="p-2.5 border border-slate-300 text-left">금일 수행 업무 (Today)</th>
+                <th class="p-2.5 border border-slate-300 w-52 text-left">익일 예정 업무 (Tomorrow)</th>
+                <th class="p-2.5 border border-slate-300 w-44 text-left">특이사항 / 보고사항</th>
+              </tr>
+            </thead>
+            <tbody id="aggregatedTableBody" class="divide-y divide-slate-200">
+              <!-- JS로 5명 테이블 행 자동 렌더링 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 공통 특이사항 및 총평란 -->
+      <div class="space-y-1.5 pt-2">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-900">■ 총괄 특이사항 및 전달사항 (업무일지 담당자 종합)</h3>
+          <span class="text-[11px] text-slate-400 no-print">* 취합 담당자가 최종 기안 시 추가 작성 가능</span>
+        </div>
+        <textarea id="overallSummaryNotes" oninput="saveOverallSummary()" rows="2" placeholder="예: 금일 5인 사회복지사 및 소속 생활지원사 정상 근무 완료. 환절기 독거 어르신 안부 확인 강화 지침 전달함." class="w-full p-2.5 border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+      </div>
+
+      <!-- 하단 서명 및 기관명 -->
+      <div class="pt-6 border-t border-slate-200 flex flex-col items-center justify-center text-center space-y-1">
+        <div class="text-sm font-bold text-slate-800">
+          위와 같이 노인맞춤돌봄서비스 일일업무 수행 내역을 보고합니다.
+        </div>
+        <div class="text-xs font-medium text-slate-500" id="reportSignDate">
+          2026년 10월 8일
+        </div>
+        <div class="text-sm font-black text-slate-900 pt-2 tracking-wider">
+          노인맞춤돌봄서비스사업단
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // 5인의 사회복지사 명단
+    const WORKERS = [
+      { id: 'worker_1', name: '정선미 주임', role: '선임 / 총괄' },
+      { id: 'worker_2', name: '김은희 사회복지사', role: '전담사회복지사' },
+      { id: 'worker_3', name: '박희숙 사회복지사', role: '전담사회복지사' },
+      { id: 'worker_4', name: '정주연 사회복지사', role: '전담사회복지사' },
+      { id: 'worker_5', name: '최태선 사회복지사', role: '전담사회복지사' }
+    ];
+
+    const STORAGE_KEY_BASE = 'CARE_DAILY_LOG_APP_V1';
+    let currentDate = '';
+    let selectedWorkerName = '정선미 주임';
+    let dayData = {}; // 날짜별 5인 데이터 및 총괄 메모
+
+    // 초기화
+    window.addEventListener('DOMContentLoaded', () => {
+      const now = new Date();
+      currentDate = now.toISOString().slice(0, 10);
+      document.getElementById('currentLogDate').value = currentDate;
+
+      loadDayData(currentDate);
+      updateDateDisplays();
+      selectWorker('정선미 주임');
+    });
+
+    // 날짜 변경 이벤트
+    function onDateChange() {
+      currentDate = document.getElementById('currentLogDate').value;
+      loadDayData(currentDate);
+      updateDateDisplays();
+      populateWorkerForm();
+    }
+
+    // 날짜 텍스트 헤더 갱신
+    function updateDateDisplays() {
+      const parts = currentDate.split('-');
+      const y = parts[0];
+      const m = parts[1];
+      const d = parts[2];
+      
+      const dt = new Date(currentDate);
+      const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+      const dayName = days[dt.getDay()];
+
+      const formattedKorean = `${y}년 ${m}월 ${d}일 (${dayName})`;
+      document.getElementById('reportDateSubtitle').textContent = formattedKorean;
+      document.getElementById('reportSignDate').textContent = `${y}년 ${m}월 ${d}일`;
+      document.getElementById('metaReportDate').textContent = currentDate;
+      document.getElementById('reportTitleDisplay').textContent = `노인맞춤돌봄서비스 일일업무일지 (${m}월 ${d}일)`;
+    }
+
+    // 데이터 로드
+    function loadDayData(dateStr) {
+      const key = `${STORAGE_KEY_BASE}_${dateStr}`;
+      const saved = localStorage.getItem(key);
+
+      if (saved) {
+        try {
+          dayData = JSON.parse(saved);
+        } catch (e) {
+          dayData = createEmptyDayData();
+        }
+      } else {
+        // 기본 템플릿 생성 (처음 오늘 날짜 예시 텍스트 채우기)
+        dayData = createSampleDayData();
+        saveCurrentDayData();
+      }
+
+      document.getElementById('overallSummaryNotes').value = dayData.overallSummary || '';
+      renderStatusCards();
+      renderAggregatedTable();
+    }
+
+    function createEmptyDayData() {
+      const empty = { overallSummary: '', workers: {} };
+      WORKERS.forEach(w => {
+        empty.workers[w.name] = {
+          todayTask: '',
+          tomorrowTask: '',
+          notes: '',
+          updatedAt: ''
+        };
+      });
+      return empty;
+    }
+
+    function createSampleDayData() {
+      return {
+        overallSummary: '금일 전담사회복지사 5명 및 소속 생활지원사 정상 복무 수행. 기상 변화에 따른 취약 어르신 건강 모니터링 실시 완료.',
+        workers: {
+          '정선미 주임': {
+            todayTask: '1. 노인맞춤돌봄서비스 일일 운영 총괄 및 일지 취합\n2. 주간 업무계획 및 예산 집행 내역 검토\n3. 권역별 위기 대상자 2건 사례회의 주재',
+            tomorrowTask: '- 지자체 맞춤돌봄 담당 주무관 업무 협의\n- 생활지원사 월례회의 안건 정리',
+            notes: '특이사항 없음',
+            updatedAt: '16:20'
+          },
+          '김은희 사회복지사': {
+            todayTask: '1. 1권역 생활지원사 복무 확인 및 활동일지 검토 (10명)\n2. 중점관리 대상자 8명 유선 모니터링\n3. 신규 대상자 사정평가표 시스템 등록 (3건)',
+            tomorrowTask: '- 신규 의뢰 독거 어르신 댁 방문 초기상담\n- 후원 결연 대상자 명단 정리',
+            notes: '김OO 어르신 보청기 지원 연계 필요',
+            updatedAt: '16:45'
+          },
+          '박희숙 사회복지사': {
+            todayTask: '1. 2권역 생활지원사 일일 안부확인 결과 취합\n2. 식생활지원(밑반찬) 배부 가구 35명 수령 확인\n3. 응급안전안심서비스 연계 가구 장비 정상작동 점검',
+            tomorrowTask: '- 밑반찬 제공업체 식단표 검토\n- 2권역 대상자 만족도 조사 준비',
+            notes: '생활지원사 1명 익일 연차',
+            updatedAt: '16:30'
+          },
+          '정주연 사회복지사': {
+            todayTask: '1. 3권역 취약계층 어르신 안부 모니터링 (15건)\n2. 주거환경 개선 연계(방충망 및 보조손잡이 설치) 가구 확인\n3. 병원 동행 서비스 일정 조율 및 배정 (2건)',
+            tomorrowTask: '- 병원 동행 현장 모니터링\n- 보건소 방문건강관리사업 연계 의뢰서 작성',
+            notes: '이OO 어르신 무릎 통증으로 파스 지원 요청',
+            updatedAt: '16:50'
+          },
+          '최태선 사회복지사': {
+            todayTask: '1. 4권역 생활지원사 활동일지 승인 및 피드백\n2. 사회관계향상 프로그램(원예교실) 참여 어르신 명단 확정\n3. 자원봉사자 연계 말벗 서비스 일정 조율',
+            tomorrowTask: '- 원예교실 프로그램 재료 준비 및 강사 사전 조율\n- 4권역 장기출타 어르신 안부 재확인',
+            notes: '정상 진행 완료',
+            updatedAt: '16:40'
+          }
+        }
+      };
+    }
+
+    function saveCurrentDayData() {
+      const key = `${STORAGE_KEY_BASE}_${currentDate}`;
+      localStorage.setItem(key, JSON.stringify(dayData));
+    }
+
+    // 담당자 탭 선택
+    function selectWorker(workerName) {
+      selectedWorkerName = workerName;
+      document.getElementById('currentEditingWorker').textContent = workerName;
+
+      document.querySelectorAll('.worker-tab').forEach(btn => {
+        if (btn.dataset.name === workerName) {
+          btn.className = 'worker-tab px-2.5 py-1 rounded-lg text-xs font-bold bg-white text-indigo-700 shadow-xs transition';
+        } else {
+          btn.className = 'worker-tab px-2.5 py-1 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+        }
+      });
+
+      populateWorkerForm();
+    }
+
+    function populateWorkerForm() {
+      const info = dayData.workers[selectedWorkerName] || { todayTask: '', tomorrowTask: '', notes: '', updatedAt: '' };
+      document.getElementById('inputTodayTask').value = info.todayTask || '';
+      document.getElementById('inputTomorrowTask').value = info.tomorrowTask || '';
+      document.getElementById('inputNotes').value = info.notes || '';
+
+      const timeEl = document.getElementById('lastSavedTimeText');
+      if (info.updatedAt) {
+        timeEl.textContent = `(최근 저장: ${info.updatedAt})`;
+      } else {
+        timeEl.textContent = '(아직 미작성)';
+      }
+    }
+
+    // 담당자 폼 제출 (저장)
+    function handleWorkerFormSubmit(e) {
+      e.preventDefault();
+
+      const todayVal = document.getElementById('inputTodayTask').value.trim();
+      const tomorrowVal = document.getElementById('inputTomorrowTask').value.trim();
+      const notesVal = document.getElementById('inputNotes').value.trim();
+
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      if (!dayData.workers[selectedWorkerName]) {
+        dayData.workers[selectedWorkerName] = {};
+      }
+
+      dayData.workers[selectedWorkerName] = {
+        todayTask: todayVal,
+        tomorrowTask: tomorrowVal,
+        notes: notesVal,
+        updatedAt: timeStr
+      };
+
+      saveCurrentDayData();
+      renderStatusCards();
+      renderAggregatedTable();
+      populateWorkerForm();
+
+      alert(`[${selectedWorkerName}]님의 업무일지가 성공적으로 등록되었습니다. 아래 기안문에 즉시 반영되었습니다.`);
+    }
+
+    // 총괄 요약 메모 저장
+    function saveOverallSummary() {
+      dayData.overallSummary = document.getElementById('overallSummaryNotes').value;
+      saveCurrentDayData();
+    }
+
+    // 5인 상단 현황 카드 렌더링
+    function renderStatusCards() {
+      const container = document.getElementById('workerStatusCards');
+      let completedCount = 0;
+
+      container.innerHTML = WORKERS.map(w => {
+        const info = dayData.workers[w.name];
+        const isDone = info && info.todayTask && info.todayTask.trim().length > 0;
+        if (isDone) completedCount++;
+
+        return `
+          <div onclick="selectWorker('${w.name}')" class="p-2.5 rounded-xl border cursor-pointer transition ${isDone ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-xs truncate">${w.name}</span>
+              ${isDone ? '<span class="text-[10px] bg-emerald-600 text-white px-1.5 py-0.2 rounded font-bold">완료</span>' : '<span class="text-[10px] bg-amber-100 text-amber-800 px-1 py-0.2 rounded font-medium">대기</span>'}
+            </div>
+            <div class="text-[11px] mt-1 text-slate-500 flex items-center justify-between">
+              <span>${w.role}</span>
+              <span class="font-mono text-[10px] text-slate-400">${info && info.updatedAt ? info.updatedAt : '-'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('completionSummary').textContent = `제출 완료 ${completedCount} / 5명 (${Math.round(completedCount / 5 * 100)}%)`;
+    }
+
+    // ⭐ 5인 통합 기안 테이블 렌더링
+    function renderAggregatedTable() {
+      const tbody = document.getElementById('aggregatedTableBody');
+
+      tbody.innerHTML = WORKERS.map(w => {
+        const info = dayData.workers[w.name] || { todayTask: '', tomorrowTask: '', notes: '' };
+        const hasToday = info.todayTask && info.todayTask.trim().length > 0;
+
+        const formatLines = text => {
+          if (!text) return '<span class="text-slate-300 font-normal">미작성</span>';
+          return text.replace(/\n/g, '<br>');
+        };
+
+        return `
+          <tr class="align-top hover:bg-slate-50/60 transition">
+            <td class="p-2.5 border border-slate-300 font-bold text-slate-900 bg-slate-50 text-center whitespace-nowrap">
+              <div class="text-xs">${w.name}</div>
+              <div class="text-[10px] text-slate-500 font-normal mt-0.5">${w.role}</div>
+            </td>
+            <td class="p-2.5 border border-slate-300 text-slate-800 leading-relaxed font-normal">
+              ${formatLines(info.todayTask)}
+            </td>
+            <td class="p-2.5 border border-slate-300 text-slate-700 leading-relaxed font-normal">
+              ${formatLines(info.tomorrowTask)}
+            </td>
+            <td class="p-2.5 border border-slate-300 text-slate-600 leading-relaxed font-normal">
+              ${formatLines(info.notes)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ⭐ 원클릭 기안문 텍스트 복사 (공문 / 메신저 / 전자결재 본문에 바로 붙여넣기용)
+    function copyDraftText() {
+      const parts = currentDate.split('-');
+      const dt = new Date(currentDate);
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const dateText = `${parts[0]}년 ${parts[1]}월 ${parts[2]}일 (${days[dt.getDay()]})`;
+
+      let text = `[노인맞춤돌봄서비스 일일업무일지]\n`;
+      text += `■ 일자: ${dateText}\n`;
+      text += `■ 담당: 전담사회복지사 5명 (정선미 주임, 김은희, 박희숙, 정주연, 최태선)\n\n`;
+      text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+      WORKERS.forEach(w => {
+        const info = dayData.workers[w.name] || {};
+        text += `\n▶ [${w.name}] (${w.role})\n`;
+        text += `1. 금일 수행 업무:\n${info.todayTask || ' (미작성)'}\n`;
+        if (info.tomorrowTask) text += `2. 익일 예정 업무:\n${info.tomorrowTask}\n`;
+        if (info.notes) text += `3. 특이사항: ${info.notes}\n`;
+      });
+
+      if (dayData.overallSummary) {
+        text += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        text += `■ 총괄 특이사항 및 전달사항:\n${dayData.overallSummary}\n`;
+      }
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert('기안문 전체 텍스트가 클립보드에 복사되었습니다!\n한글(HWP)이나 내부 그룹웨어 전자결재창에 바로 붙여넣기(Ctrl+V) 하세요.');
+      }).catch(() => {
+        prompt('아래 텍스트를 복사(Ctrl+C)하세요:', text);
+      });
+    }
+  </script>
+</body>
+</html>
