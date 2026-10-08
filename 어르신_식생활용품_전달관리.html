@@ -32,10 +32,13 @@
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
             후원담당자 검토·승인 지원
           </span>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+            주별·월별 단위 검색
+          </span>
           <span class="text-xs text-slate-500" id="currentDateDisplay"></span>
         </div>
         <h1 class="text-2xl font-bold text-slate-900 tracking-tight">어르신 식생활용품 전달 & 안부 모니터링 관리시스템</h1>
-        <p class="text-sm text-slate-600 mt-1">생활지원사의 현장 기록을 후원 담당자가 실시간으로 확인(승인)하고, 누락되거나 미비한 내용을 직접 수정·보완할 수 있습니다.</p>
+        <p class="text-sm text-slate-600 mt-1">생활지원사의 현장 기록을 주별/월별 단위로 편리하게 검색하고, 후원 담당자가 누락 내용을 수정·승인하여 일괄 관리하세요.</p>
       </div>
       <div class="flex flex-wrap items-center gap-2 no-print">
         <button onclick="exportToCSV()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm transition shadow-sm active:scale-95">
@@ -49,10 +52,10 @@
       </div>
     </header>
 
-    <!-- 요약 통계 카드 (담당자 확인 현황 포함) -->
+    <!-- 요약 통계 카드 -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-3 no-print">
       <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
-        <span class="text-xs font-medium text-slate-500">전체 전달 기록</span>
+        <span class="text-xs font-medium text-slate-500">전체 누적 기록</span>
         <div class="text-2xl font-bold text-slate-800 mt-1" id="statTotal">0건</div>
       </div>
       <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
@@ -70,7 +73,7 @@
         <span class="text-xs font-medium text-purple-600">후원 담당자 검토</span>
         <div class="text-xs font-bold mt-2 space-y-0.5">
           <div class="text-purple-700">✅ 확인완료: <span id="statApproved">0</span></div>
-          <div class="text-slate-500">⏳ 미확인(대기): <span id="statPending">0</span></div>
+          <div class="text-slate-500">⏳ 미확인: <span id="statPending">0</span></div>
         </div>
       </div>
       <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm col-span-2 md:col-span-1">
@@ -251,7 +254,7 @@
       <!-- 오른쪽: 일괄 관리 대장 (실시간 누적 테이블, 검토 및 수정) -->
       <div class="lg:col-span-7 space-y-4">
         
-        <!-- 🔍 다각도 검색 및 검토 필터 바 -->
+        <!-- 🔍 1. 다각도 키워드 검색 바 -->
         <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3 no-print">
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <!-- 검색 유형 선택 드롭다운 -->
@@ -267,7 +270,7 @@
 
             <!-- 검색 입력창 -->
             <div class="relative flex-1">
-              <input type="text" id="searchInput" oninput="renderTable()" placeholder="검색어를 입력하세요..." class="w-full pl-9 pr-8 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <input type="text" id="searchInput" oninput="renderTable()" placeholder="검색어를 입력하세요 (성함, 주소, 물품, 담당자 등)..." class="w-full pl-9 pr-8 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -275,15 +278,15 @@
             </div>
           </div>
 
-          <!-- 상태별 빠른 필터 버튼 (담당자 확인 필터 포함) -->
+          <!-- 상태별 빠른 필터 버튼 -->
           <div class="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-xs gap-2">
             <div class="flex flex-wrap items-center gap-1.5">
-              <span class="text-slate-400 font-medium mr-1">필터:</span>
-              <button onclick="setFilter('all')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-900 text-white transition" data-filter="all">전체보기</button>
-              <button onclick="setFilter('pending')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-purple-700 hover:bg-purple-50 transition" data-filter="pending">⏳ 미확인(검토대기)</button>
-              <button onclick="setFilter('approved')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-emerald-700 hover:bg-emerald-50 transition" data-filter="approved">✅ 확인완료만</button>
-              <button onclick="setFilter('sub')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-amber-700 hover:bg-amber-50 transition" data-filter="sub">🔄 대신업무</button>
-              <button onclick="setFilter('alert')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-rose-600 hover:bg-rose-50 transition" data-filter="alert">주의·위험</button>
+              <span class="text-slate-400 font-medium mr-1">상태 필터:</span>
+              <button onclick="setStatusFilter('all')" class="status-filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-900 text-white transition" data-status="all">전체보기</button>
+              <button onclick="setStatusFilter('pending')" class="status-filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-purple-700 hover:bg-purple-50 transition" data-status="pending">⏳ 미확인(검토대기)</button>
+              <button onclick="setStatusFilter('approved')" class="status-filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-emerald-700 hover:bg-emerald-50 transition" data-status="approved">✅ 확인완료</button>
+              <button onclick="setStatusFilter('sub')" class="status-filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-amber-700 hover:bg-amber-50 transition" data-status="sub">🔄 대신업무</button>
+              <button onclick="setStatusFilter('alert')" class="status-filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-rose-600 hover:bg-rose-50 transition" data-status="alert">주의·위험</button>
             </div>
             <button onclick="clearAllData()" class="text-slate-400 hover:text-rose-500 transition flex items-center gap-1 ml-auto" title="데이터 초기화">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -292,11 +295,84 @@
           </div>
         </div>
 
+        <!-- 📅 ⭐ 2. 주별 / 월별 단위 기간 검색 카드 (신규 추가) -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3 no-print">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                기간별 단위 검색 (주별 / 월별)
+              </span>
+              <span id="periodBadge" class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                전체 기간
+              </span>
+            </div>
+            
+            <!-- 단위 모드 전환 버튼 -->
+            <div class="flex items-center gap-1 text-xs">
+              <button type="button" onclick="setPeriodMode('quick')" id="modeQuickBtn" class="px-2.5 py-1 rounded-lg font-bold bg-slate-900 text-white transition">빠른선택</button>
+              <button type="button" onclick="setPeriodMode('week')" id="modeWeekBtn" class="px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">📅 주별</button>
+              <button type="button" onclick="setPeriodMode('month')" id="modeMonthBtn" class="px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition">🗓️ 월별</button>
+            </div>
+          </div>
+
+          <!-- 1) 빠른 기간 버튼 그룹 -->
+          <div id="periodQuickBox" class="flex flex-wrap items-center gap-1.5 text-xs">
+            <button onclick="selectQuickPeriod('all')" class="period-btn px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600 text-white transition shadow-xs" data-period="all">전체 기간</button>
+            <button onclick="selectQuickPeriod('today')" class="period-btn px-2.5 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition" data-period="today">오늘</button>
+            <button onclick="selectQuickPeriod('this_week')" class="period-btn px-2.5 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition" data-period="this_week">이번 주 (월~금)</button>
+            <button onclick="selectQuickPeriod('last_week')" class="period-btn px-2.5 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition" data-period="last_week">지난 주</button>
+            <button onclick="selectQuickPeriod('this_month')" class="period-btn px-2.5 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition" data-period="this_month">이번 달</button>
+            <button onclick="selectQuickPeriod('last_month')" class="period-btn px-2.5 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition" data-period="last_month">지난 달</button>
+          </div>
+
+          <!-- 2) 주별(Weekly) 선택 컨트롤러 -->
+          <div id="periodWeekBox" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2">
+              <button onclick="shiftWeek(-1)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-bold transition flex items-center gap-1">
+                ◀ 이전 주
+              </button>
+              <input type="date" id="weekPickerDate" onchange="onWeekDateChange()" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white font-medium focus:ring-2 focus:ring-emerald-500">
+              <button onclick="shiftWeek(1)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-bold transition flex items-center gap-1">
+                다음 주 ▶
+              </button>
+              <button onclick="selectQuickPeriod('this_week')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg font-bold hover:bg-emerald-100 transition">
+                이번 주로 이동
+              </button>
+            </div>
+            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5" id="weekRangeLabel">
+              📌 선택 주간: -
+            </div>
+          </div>
+
+          <!-- 3) 월별(Monthly) 선택 컨트롤러 -->
+          <div id="periodMonthBox" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2">
+              <button onclick="shiftMonth(-1)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-bold transition flex items-center gap-1">
+                ◀ 이전 달
+              </button>
+              <input type="month" id="monthPickerMonth" onchange="onMonthChange()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white font-semibold focus:ring-2 focus:ring-emerald-500">
+              <button onclick="shiftMonth(1)" class="px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 font-bold transition flex items-center gap-1">
+                다음 달 ▶
+              </button>
+              <button onclick="selectQuickPeriod('this_month')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg font-bold hover:bg-emerald-100 transition">
+                이번 달로 이동
+              </button>
+            </div>
+            <div class="font-bold text-slate-800 text-xs flex items-center gap-1.5" id="monthRangeLabel">
+              📌 선택 월: -
+            </div>
+          </div>
+        </div>
+
         <!-- 일괄 대장 목록 테이블 -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden print-border">
           <div class="p-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 class="font-bold text-slate-800 text-base">식생활용품 전달 & 안부 통합 관리대장</h3>
+              <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                <span>식생활용품 전달 & 안부 통합 관리대장</span>
+                <span id="tablePeriodSubtitle" class="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">전체</span>
+              </h3>
               <p class="text-[11px] text-slate-400 mt-0.5">후원 담당자는 [확인] 원터치 승인 또는 [수정] 버튼으로 누락 내용을 보완할 수 있습니다.</p>
             </div>
             <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 rounded-full text-slate-600" id="recordCountText">총 0건 기록</span>
@@ -323,7 +399,7 @@
           </div>
 
           <div id="emptyMessage" class="p-8 text-center text-slate-400 text-sm hidden">
-            조건에 맞는 전달 기록이 없습니다. 검색어를 변경하거나 새로운 기록을 입력해 주세요.
+            선택하신 기간 및 조건에 맞는 전달 기록이 없습니다. 검색 조건을 변경하거나 새로운 기록을 입력해 주세요.
           </div>
         </div>
 
@@ -349,7 +425,7 @@
           </button>
         </div>
 
-        <!-- 모달 폼 본문 (스크롤 가능) -->
+        <!-- 모달 폼 본문 -->
         <form id="editForm" onsubmit="handleEditFormSubmit(event)" class="p-6 space-y-4 overflow-y-auto">
           <input type="hidden" id="editRecordId">
 
@@ -433,11 +509,11 @@
 
           <!-- 5. 생활지원사 현장 메모 -->
           <div>
-            <label class="block text-xs font-semibold text-slate-700 mb-1">생활지원사 현장 메모 (기존 입력)</label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">생활지원사 현장 메모</label>
             <textarea id="editNotes" rows="2" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-indigo-500"></textarea>
           </div>
 
-          <!-- ⭐ 6. 후원 담당자 전용 보완 및 승인 영역 -->
+          <!-- 6. 후원 담당자 전용 보완 및 승인 영역 -->
           <div class="bg-purple-50 border border-purple-200 rounded-2xl p-4 space-y-3">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-purple-950 flex items-center gap-1.5">
@@ -457,7 +533,7 @@
               </div>
               <div>
                 <label class="block text-[11px] font-semibold text-purple-900 mb-1">담당자 보완 및 검토 메모</label>
-                <input type="text" id="editManagerNotes" placeholder="예: 후원처 2세트 분량 확인완료 / 보건소 진료 연계조치" class="w-full px-3 py-2 border border-purple-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-purple-500">
+                <input type="text" id="editManagerNotes" placeholder="예: 후원처 2세트 분량 확인완료 / 보건소 진료 연계" class="w-full px-3 py-2 border border-purple-300 rounded-xl text-xs bg-white focus:ring-2 focus:ring-purple-500">
               </div>
             </div>
           </div>
@@ -489,14 +565,13 @@
   </div>
 
   <script>
-    // 로컬 스토리지 키 (V4로 업그레이드)
-    const STORAGE_KEY = 'ELDERLY_DELIVERY_RECORDS_V4';
+    const STORAGE_KEY = 'ELDERLY_DELIVERY_RECORDS_V5';
 
-    // 기본 샘플 데이터 (담당자 확인 필드 포함)
+    // 샘플 데이터: 오늘, 이번 주, 지난 주, 지난 달 골고루 배치하여 주별/월별 테스트 가능
     const initialSampleData = [
       {
         id: 'rec_1',
-        dateTime: new Date(Date.now() - 3600000 * 3).toISOString().slice(0, 16),
+        dateTime: '2026-10-08T11:30', // 오늘 (목요일, 41주차)
         dutyType: '내 업무',
         originalWorker: '',
         seniorName: '김옥순 어르신',
@@ -515,7 +590,7 @@
       },
       {
         id: 'rec_2',
-        dateTime: new Date(Date.now() - 3600000 * 2).toISOString().slice(0, 16),
+        dateTime: '2026-10-07T14:10', // 어제 (수요일, 41주차)
         dutyType: '대신 업무',
         originalWorker: '이영희 생활지원사',
         seniorName: '박영철 어르신',
@@ -534,7 +609,7 @@
       },
       {
         id: 'rec_3',
-        dateTime: new Date().toISOString().slice(0, 16),
+        dateTime: '2026-10-05T10:20', // 이번 주 월요일 (41주차)
         dutyType: '내 업무',
         originalWorker: '',
         seniorName: '이복순 어르신',
@@ -545,17 +620,87 @@
         quantity: 1,
         unit: '세트',
         condition: '보통',
-        notes: '다음 주 수요일 보건소 진료로 오후 3시 이후 방문 요청.',
+        notes: '다음 주 수요일 보건소 진료로 오후 방문 요청.',
         photoData: '',
         managerVerified: true,
         managerName: '정주연 후원담당자',
-        managerNotes: '다음 주 일정 캘린더 반영 완료'
+        managerNotes: '일정 확인 완료'
+      },
+      {
+        id: 'rec_4',
+        dateTime: '2026-10-01T15:00', // 지난 주 목요일 (10월 1일, 40주차)
+        dutyType: '내 업무',
+        originalWorker: '',
+        seniorName: '정해숙 어르신',
+        phone: '010-7777-8888',
+        address: '샛별아파트 105동 1102호',
+        category: '빵·제과',
+        itemDetail: '소보로빵 3개, 우유 2팩',
+        quantity: 1,
+        unit: '세트',
+        condition: '양호',
+        notes: '식사 규칙적으로 잘 하심.',
+        photoData: '',
+        managerVerified: true,
+        managerName: '정주연 후원담당자',
+        managerNotes: '10월 1주차 정산 포함'
+      },
+      {
+        id: 'rec_5',
+        dateTime: '2026-09-24T11:00', // 지난 달 (9월 24일, 9월)
+        dutyType: '내 업무',
+        originalWorker: '',
+        seniorName: '강동원 어르신',
+        phone: '010-3333-2222',
+        address: '중앙로 88번길 5',
+        category: '밑반찬',
+        itemDetail: '소고기장조림, 겉절이, 된장국',
+        quantity: 1,
+        unit: '세트',
+        condition: '양호',
+        notes: '추석 전 안부 확인 완료.',
+        photoData: '',
+        managerVerified: true,
+        managerName: '정주연 후원담당자',
+        managerNotes: '9월 마감 완료'
       }
     ];
 
     let records = [];
-    let currentFilter = 'all';
+    let currentStatusFilter = 'all'; // 상태 필터 (all, pending, approved, sub, alert)
     let currentUploadedPhoto = '';
+
+    // ⭐ 기간 필터 상태 객체
+    let periodState = {
+      mode: 'quick',        // 'quick', 'week', 'month'
+      type: 'all',          // 'all', 'today', 'this_week', 'last_week', 'this_month', 'last_month', 'custom_week', 'custom_month'
+      startDate: null,      // 'YYYY-MM-DD'
+      endDate: null,        // 'YYYY-MM-DD'
+      label: '전체 기간'
+    };
+
+    // 주/월 계산 헬퍼 함수
+    function getWeekBoundaries(d) {
+      const date = new Date(d);
+      const day = date.getDay(); // 0(일), 1(월) ~ 6(토)
+      const diffToMon = day === 0 ? -6 : 1 - day; // 월요일 기준
+      const mon = new Date(date);
+      mon.setDate(date.getDate() + diffToMon);
+      
+      const fri = new Date(mon);
+      fri.setDate(mon.getDate() + 4); // 금요일 (월~금 정기배달)
+      
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6); // 일요일
+
+      const fmt = dt => dt.toISOString().slice(0, 10);
+      return {
+        monStr: fmt(mon),
+        friStr: fmt(fri),
+        sunStr: fmt(sun),
+        monDate: mon
+      };
+    }
 
     // 초기화
     window.addEventListener('DOMContentLoaded', () => {
@@ -566,12 +711,18 @@
       const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
       document.getElementById('currentDateDisplay').textContent = now.toLocaleDateString('ko-KR', options);
 
-      // 데이터 마이그레이션 (V3, V2, V1 모두 호환)
-      const savedV4 = localStorage.getItem(STORAGE_KEY);
-      const savedOld = localStorage.getItem('ELDERLY_DELIVERY_RECORDS_V3') || localStorage.getItem('ELDERLY_DELIVERY_RECORDS_V2') || localStorage.getItem('ELDERLY_DELIVERY_RECORDS_V1');
+      // 기간 인풋 기본값 설정
+      const todayStr = now.toISOString().slice(0, 10);
+      const monthStr = now.toISOString().slice(0, 7);
+      document.getElementById('weekPickerDate').value = todayStr;
+      document.getElementById('monthPickerMonth').value = monthStr;
 
-      if (savedV4) {
-        try { records = JSON.parse(savedV4); } catch (e) { records = initialSampleData; }
+      // 데이터 마이그레이션
+      const savedV5 = localStorage.getItem(STORAGE_KEY);
+      const savedOld = localStorage.getItem('ELDERLY_DELIVERY_RECORDS_V4') || localStorage.getItem('ELDERLY_DELIVERY_RECORDS_V3') || localStorage.getItem('ELDERLY_DELIVERY_RECORDS_V2');
+
+      if (savedV5) {
+        try { records = JSON.parse(savedV5); } catch (e) { records = initialSampleData; }
       } else if (savedOld) {
         try {
           const oldList = JSON.parse(savedOld);
@@ -590,13 +741,175 @@
         saveRecords();
       }
 
-      renderTable();
+      // 기본 전체 기간 설정
+      selectQuickPeriod('all');
       updateStats();
     });
 
     function saveRecords() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
       updateStats();
+    }
+
+    // ⭐ 기간 모드 전환 (빠른선택 / 주별 / 월별)
+    function setPeriodMode(mode) {
+      periodState.mode = mode;
+      
+      const qBox = document.getElementById('periodQuickBox');
+      const wBox = document.getElementById('periodWeekBox');
+      const mBox = document.getElementById('periodMonthBox');
+      const qBtn = document.getElementById('modeQuickBtn');
+      const wBtn = document.getElementById('modeWeekBtn');
+      const mBtn = document.getElementById('modeMonthBtn');
+
+      // 탭 스타일 리셋
+      [qBtn, wBtn, mBtn].forEach(b => b.className = 'px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition');
+
+      if (mode === 'quick') {
+        qBox.classList.remove('hidden');
+        wBox.classList.add('hidden');
+        mBox.classList.add('hidden');
+        qBtn.className = 'px-2.5 py-1 rounded-lg font-bold bg-slate-900 text-white transition';
+      } else if (mode === 'week') {
+        qBox.classList.add('hidden');
+        wBox.classList.remove('hidden');
+        mBox.classList.add('hidden');
+        wBtn.className = 'px-2.5 py-1 rounded-lg font-bold bg-slate-900 text-white transition';
+        onWeekDateChange();
+      } else if (mode === 'month') {
+        qBox.classList.add('hidden');
+        wBox.classList.add('hidden');
+        mBox.classList.remove('hidden');
+        mBtn.className = 'px-2.5 py-1 rounded-lg font-bold bg-slate-900 text-white transition';
+        onMonthChange();
+      }
+    }
+
+    // ⭐ 빠른 기간 선택 버튼
+    function selectQuickPeriod(p) {
+      periodState.type = p;
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+
+      document.querySelectorAll('.period-btn').forEach(b => {
+        if (b.dataset.period === p) {
+          b.className = 'period-btn px-2.5 py-1.5 rounded-lg font-bold bg-emerald-600 text-white transition shadow-xs';
+        } else {
+          b.className = 'period-btn px-2.5 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition';
+        }
+      });
+
+      if (p === 'all') {
+        periodState.startDate = null;
+        periodState.endDate = null;
+        periodState.label = '전체 기간';
+      } else if (p === 'today') {
+        periodState.startDate = todayStr;
+        periodState.endDate = todayStr;
+        periodState.label = `오늘 (${todayStr})`;
+      } else if (p === 'this_week') {
+        const { monStr, sunStr } = getWeekBoundaries(now);
+        periodState.startDate = monStr;
+        periodState.endDate = sunStr;
+        periodState.label = `이번 주 (${monStr} ~ ${sunStr})`;
+        document.getElementById('weekPickerDate').value = todayStr;
+        document.getElementById('weekRangeLabel').textContent = `📌 이번 주: ${monStr} ~ ${sunStr}`;
+      } else if (p === 'last_week') {
+        const lastW = new Date(now);
+        lastW.setDate(now.getDate() - 7);
+        const { monStr, sunStr } = getWeekBoundaries(lastW);
+        periodState.startDate = monStr;
+        periodState.endDate = sunStr;
+        periodState.label = `지난 주 (${monStr} ~ ${sunStr})`;
+        document.getElementById('weekPickerDate').value = monStr;
+        document.getElementById('weekRangeLabel').textContent = `📌 지난 주: ${monStr} ~ ${sunStr}`;
+      } else if (p === 'this_month') {
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const start = new Date(y, m, 1).toISOString().slice(0, 10);
+        const end = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+        periodState.startDate = start;
+        periodState.endDate = end;
+        periodState.label = `이번 달 (${y}년 ${m + 1}월)`;
+        document.getElementById('monthPickerMonth').value = `${y}-${String(m + 1).padStart(2, '0')}`;
+        document.getElementById('monthRangeLabel').textContent = `📌 ${y}년 ${m + 1}월 전체`;
+      } else if (p === 'last_month') {
+        const y = now.getFullYear();
+        const m = now.getMonth() - 1;
+        const lastMDate = new Date(y, m, 1);
+        const actualY = lastMDate.getFullYear();
+        const actualM = lastMDate.getMonth();
+        const start = new Date(actualY, actualM, 1).toISOString().slice(0, 10);
+        const end = new Date(actualY, actualM + 1, 0).toISOString().slice(0, 10);
+        periodState.startDate = start;
+        periodState.endDate = end;
+        periodState.label = `지난 달 (${actualY}년 ${actualM + 1}월)`;
+        document.getElementById('monthPickerMonth').value = `${actualY}-${String(actualM + 1).padStart(2, '0')}`;
+        document.getElementById('monthRangeLabel').textContent = `📌 ${actualY}년 ${actualM + 1}월 전체`;
+      }
+
+      updatePeriodDisplay();
+      renderTable();
+    }
+
+    // ⭐ 주별 날짜 피커 변경 시
+    function onWeekDateChange() {
+      const pickerVal = document.getElementById('weekPickerDate').value;
+      if (!pickerVal) return;
+
+      const { monStr, sunStr } = getWeekBoundaries(pickerVal);
+      periodState.type = 'custom_week';
+      periodState.startDate = monStr;
+      periodState.endDate = sunStr;
+      periodState.label = `주간 (${monStr} ~ ${sunStr})`;
+
+      document.getElementById('weekRangeLabel').textContent = `📌 선택 주간: ${monStr} ~ ${sunStr}`;
+      updatePeriodDisplay();
+      renderTable();
+    }
+
+    // 주 이동 (이전 주 / 다음 주)
+    function shiftWeek(diffWeeks) {
+      const cur = document.getElementById('weekPickerDate').value || new Date().toISOString().slice(0, 10);
+      const dt = new Date(cur);
+      dt.setDate(dt.getDate() + (diffWeeks * 7));
+      document.getElementById('weekPickerDate').value = dt.toISOString().slice(0, 10);
+      onWeekDateChange();
+    }
+
+    // ⭐ 월별 피커 변경 시
+    function onMonthChange() {
+      const monthVal = document.getElementById('monthPickerMonth').value; // 'YYYY-MM'
+      if (!monthVal) return;
+
+      const [y, m] = monthVal.split('-').map(Number);
+      const start = new Date(y, m - 1, 1).toISOString().slice(0, 10);
+      const end = new Date(y, m, 0).toISOString().slice(0, 10);
+
+      periodState.type = 'custom_month';
+      periodState.startDate = start;
+      periodState.endDate = end;
+      periodState.label = `월간 (${y}년 ${m}월)`;
+
+      document.getElementById('monthRangeLabel').textContent = `📌 선택 월: ${y}년 ${m}월 전체`;
+      updatePeriodDisplay();
+      renderTable();
+    }
+
+    // 월 이동 (이전 달 / 다음 달)
+    function shiftMonth(diffMonths) {
+      const cur = document.getElementById('monthPickerMonth').value || new Date().toISOString().slice(0, 7);
+      const [y, m] = cur.split('-').map(Number);
+      const dt = new Date(y, m - 1 + diffMonths, 1);
+      const nextY = dt.getFullYear();
+      const nextM = String(dt.getMonth() + 1).padStart(2, '0');
+      document.getElementById('monthPickerMonth').value = `${nextY}-${nextM}`;
+      onMonthChange();
+    }
+
+    function updatePeriodDisplay() {
+      document.getElementById('periodBadge').textContent = periodState.label;
+      document.getElementById('tablePeriodSubtitle').textContent = periodState.label;
     }
 
     // 업무 구분 UI 토글
@@ -620,14 +933,10 @@
     function toggleEditOriginalWorker() {
       const isSub = document.getElementById('editDutyType').value === '대신 업무';
       const box = document.getElementById('editOriginalWorkerBox');
-      if (isSub) {
-        box.classList.remove('opacity-50');
-      } else {
-        box.classList.add('opacity-50');
-      }
+      if (isSub) box.classList.remove('opacity-50');
+      else box.classList.add('opacity-50');
     }
 
-    // 품목 카테고리 선택
     function selectCategory(cat) {
       document.getElementById('inputCategory').value = cat;
       document.querySelectorAll('.cat-btn').forEach(btn => {
@@ -639,11 +948,9 @@
       });
     }
 
-    // 컨디션 라디오 버튼 스타일
     function updateConditionStyle() {
       const selected = document.querySelector('input[name="condition"]:checked').value;
       const cards = document.querySelectorAll('.condition-card');
-      
       cards.forEach(card => {
         const val = card.querySelector('input').value;
         if (val === selected) {
@@ -658,7 +965,6 @@
       });
     }
 
-    // 사진 업로드 핸들러
     function handlePhotoUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -671,7 +977,6 @@
           const maxDim = 800;
           let width = img.width;
           let height = img.height;
-
           if (width > height && width > maxDim) {
             height = Math.round((height * maxDim) / width);
             width = maxDim;
@@ -679,7 +984,6 @@
             width = Math.round((width * maxDim) / height);
             height = maxDim;
           }
-
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
@@ -702,7 +1006,6 @@
       document.getElementById('photoLabel').textContent = '사진 촬영 또는 파일 선택';
     }
 
-    // 생활지원사 현장 폼 제출
     function handleFormSubmit(e) {
       e.preventDefault();
 
@@ -724,7 +1027,7 @@
         condition: document.querySelector('input[name="condition"]:checked').value,
         notes: document.getElementById('inputNotes').value.trim(),
         photoData: currentUploadedPhoto,
-        managerVerified: false, // 기본값: 미확인
+        managerVerified: false,
         managerName: '',
         managerNotes: ''
       };
@@ -733,7 +1036,6 @@
       saveRecords();
       renderTable();
 
-      // 리셋
       document.querySelector('input[name="dutyType"][value="내 업무"]').checked = true;
       updateDutyTypeUI();
       document.getElementById('inputOriginalWorker').value = '';
@@ -744,17 +1046,16 @@
       document.getElementById('inputNotes').value = '';
       removePhoto();
 
-      alert(`[${newRecord.seniorName}] 전달 기록이 등록되었습니다. (후원 담당자 검토 대기)`);
+      alert(`[${newRecord.seniorName}] 전달 기록이 등록되었습니다.`);
     }
 
-    // ⭐ 후원 담당자: 원터치 확인(승인) 토글
     function toggleManagerVerify(id) {
       const target = records.find(r => r.id === id);
       if (!target) return;
 
       if (!target.managerVerified) {
         const mgrName = prompt('후원 담당자 성함을 입력해주세요:', target.managerName || '정주연 후원담당자');
-        if (mgrName === null) return; // 취소시 중단
+        if (mgrName === null) return;
         target.managerVerified = true;
         target.managerName = mgrName.trim() || '후원담당자';
       } else {
@@ -767,7 +1068,6 @@
       renderTable();
     }
 
-    // ⭐ 후원 담당자: 수정 모달 열기
     function openEditModal(id) {
       const target = records.find(r => r.id === id);
       if (!target) return;
@@ -787,11 +1087,8 @@
       document.getElementById('editQuantity').value = target.quantity;
       document.getElementById('editUnit').value = target.unit || '세트';
 
-      // 컨디션 라디오
       const condRadios = document.querySelectorAll('input[name="editCondition"]');
-      condRadios.forEach(r => {
-        r.checked = (r.value === target.condition);
-      });
+      condRadios.forEach(r => { r.checked = (r.value === target.condition); });
 
       document.getElementById('editNotes').value = target.notes || '';
       document.getElementById('editManagerVerified').checked = !!target.managerVerified;
@@ -805,7 +1102,6 @@
       document.getElementById('editModal').classList.add('hidden');
     }
 
-    // 수정 폼 제출 저장
     function handleEditFormSubmit(e) {
       e.preventDefault();
 
@@ -835,10 +1131,9 @@
       saveRecords();
       renderTable();
       closeEditModal();
-      alert(`[${target.seniorName}] 기록이 성공적으로 수정·보완되었습니다.`);
+      alert(`[${target.seniorName}] 기록이 수정·보완되었습니다.`);
     }
 
-    // 기록 삭제
     function deleteRecord(id) {
       if (confirm('이 전달 기록을 정말 삭제하시겠습니까?')) {
         records = records.filter(r => r.id !== id);
@@ -847,14 +1142,13 @@
       }
     }
 
-    // 필터 변경
-    function setFilter(filter) {
-      currentFilter = filter;
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        if (btn.dataset.filter === filter) {
-          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-900 text-white transition';
+    function setStatusFilter(filter) {
+      currentStatusFilter = filter;
+      document.querySelectorAll('.status-filter-btn').forEach(btn => {
+        if (btn.dataset.status === filter) {
+          btn.className = 'status-filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-900 text-white transition';
         } else {
-          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+          btn.className = 'status-filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
         }
       });
       renderTable();
@@ -865,20 +1159,28 @@
       renderTable();
     }
 
-    // 렌더링
+    // ⭐ 다각도 검색 + 기간별(주별/월별) 필터링 + 상태 필터링 결합 렌더링
     function renderTable() {
       const tbody = document.getElementById('recordTableBody');
       const searchInput = document.getElementById('searchInput');
       const searchVal = searchInput.value.trim().toLowerCase();
       const searchCleanNum = searchVal.replace(/[^0-9]/g, '');
       const searchType = document.getElementById('searchType').value;
-      const todayStr = new Date().toISOString().slice(0, 10);
 
       const clearBtn = document.getElementById('clearSearchBtn');
       if (searchVal.length > 0) clearBtn.classList.remove('hidden');
       else clearBtn.classList.add('hidden');
 
       let filtered = records.filter(r => {
+        // 1. 기간(주별/월별) 필터링
+        if (periodState.startDate && periodState.endDate) {
+          const recDateOnly = (r.dateTime || '').slice(0, 10);
+          if (recDateOnly < periodState.startDate || recDateOnly > periodState.endDate) {
+            return false;
+          }
+        }
+
+        // 2. 키워드 검색
         if (searchVal) {
           const name = (r.seniorName || '').toLowerCase();
           const addr = (r.address || '').toLowerCase();
@@ -905,7 +1207,6 @@
           } else if (searchType === 'managerNotes') {
             if (!mgrNotes.includes(searchVal)) return false;
           } else {
-            // 전체 검색
             const match = name.includes(searchVal) || addr.includes(searchVal) || 
                           phone.includes(searchVal) || (searchCleanNum && phoneClean.includes(searchCleanNum)) ||
                           item.includes(searchVal) || cat.includes(searchVal) || 
@@ -915,12 +1216,11 @@
           }
         }
 
-        // 탭 필터
-        if (currentFilter === 'today') return r.dateTime.startsWith(todayStr);
-        if (currentFilter === 'pending') return !r.managerVerified;
-        if (currentFilter === 'approved') return !!r.managerVerified;
-        if (currentFilter === 'sub') return r.dutyType === '대신 업무';
-        if (currentFilter === 'alert') return r.condition === '주의' || r.condition === '위험';
+        // 3. 상태 필터
+        if (currentStatusFilter === 'pending') return !r.managerVerified;
+        if (currentStatusFilter === 'approved') return !!r.managerVerified;
+        if (currentStatusFilter === 'sub') return r.dutyType === '대신 업무';
+        if (currentStatusFilter === 'alert') return r.condition === '주의' || r.condition === '위험';
         return true;
       });
 
@@ -935,20 +1235,17 @@
       }
 
       tbody.innerHTML = filtered.map(r => {
-        // 컨디션
         let badge = '';
         if (r.condition === '양호') badge = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">🟢 양호</span>';
         else if (r.condition === '보통') badge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">🔵 보통</span>';
         else if (r.condition === '주의') badge = '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold animate-pulse">🟡 주의</span>';
         else if (r.condition === '위험') badge = '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold animate-pulse">🔴 위험</span>';
 
-        // 업무 구분
         const isSubDuty = r.dutyType === '대신 업무';
         const dutyBadge = isSubDuty
           ? `<span class="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">🔄대신${r.originalWorker ? `(${r.originalWorker})` : ''}</span>`
           : `<span class="inline-block px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px] font-semibold">👤본인</span>`;
 
-        // ⭐ 후원 담당자 확인 뱃지 & 토글 버튼
         const isVerified = !!r.managerVerified;
         const verifyBtnHtml = isVerified
           ? `<button onclick="toggleManagerVerify('${r.id}')" class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-300 font-bold text-[11px] transition" title="클릭 시 확인 취소">
@@ -961,7 +1258,6 @@
                미확인
              </button>`;
 
-        // 사진 썸네일
         const photoHtml = r.photoData 
           ? `<img src="${r.photoData}" onclick="openImageModal('${r.photoData}')" class="w-8 h-8 rounded-lg object-cover cursor-pointer hover:opacity-80 border border-slate-200 transition shadow-sm" alt="사진">`
           : `<span class="inline-block w-8 h-8 rounded-lg bg-slate-100 text-slate-300 flex items-center justify-center text-[10px]">무</span>`;
@@ -1001,11 +1297,9 @@
             </td>
             <td class="px-2 py-2.5 text-center no-print whitespace-nowrap">
               <div class="flex items-center justify-center gap-1">
-                <!-- 수정 버튼 -->
                 <button onclick="openEditModal('${r.id}')" class="p-1.5 bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white rounded-lg transition" title="기록 수정 및 보완">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                 </button>
-                <!-- 삭제 버튼 -->
                 <button onclick="deleteRecord('${r.id}')" class="p-1.5 bg-slate-50 hover:bg-rose-600 text-slate-400 hover:text-white rounded-lg transition" title="삭제">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
@@ -1016,11 +1310,10 @@
       }).join('');
     }
 
-    // 통계 업데이트
     function updateStats() {
       const todayStr = new Date().toISOString().slice(0, 10);
       document.getElementById('statTotal').textContent = records.length + '건';
-      document.getElementById('statToday').textContent = records.filter(r => r.dateTime.startsWith(todayStr)).length + '건';
+      document.getElementById('statToday').textContent = records.filter(r => (r.dateTime || '').startsWith(todayStr)).length + '건';
       
       const myCount = records.filter(r => (r.dutyType || '내 업무') === '내 업무').length;
       const subCount = records.filter(r => r.dutyType === '대신 업무').length;
@@ -1035,15 +1328,24 @@
       document.getElementById('statAlert').textContent = records.filter(r => r.condition === '주의' || r.condition === '위험').length + '건';
     }
 
-    // 엑셀(CSV) 내보내기 (담당자 확인 상태, 확인자, 보완메모 포함)
+    // ⭐ 엑셀(CSV) 내보내기 (현재 선택된 기간 반영 스마트 다운로드)
     function exportToCSV() {
-      if (records.length === 0) {
-        alert('다운로드할 데이터가 없습니다.');
+      // 현재 기간 필터가 적용된 대상 레코드 추출
+      let targetList = records;
+      if (periodState.startDate && periodState.endDate) {
+        targetList = records.filter(r => {
+          const dt = (r.dateTime || '').slice(0, 10);
+          return dt >= periodState.startDate && dt <= periodState.endDate;
+        });
+      }
+
+      if (targetList.length === 0) {
+        alert('현재 선택된 기간에 다운로드할 데이터가 없습니다.');
         return;
       }
 
       const headers = ['일시', '업무 구분', '원래 담당자(대신업무시)', '어르신 성함', '전화번호', '주소', '품목 분류', '상세 품목명', '수량', '단위', '컨디션 체크', '생활지원사 특이사항', '후원담당자 승인여부', '확인 담당자명', '담당자 보완메모', '사진첨부여부'];
-      const rows = records.map(r => [
+      const rows = targetList.map(r => [
         `"${r.dateTime.replace('T', ' ')}"`,
         `"${r.dutyType || '내 업무'}"`,
         `"${r.originalWorker || ''}"`,
@@ -1066,8 +1368,17 @@
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
+
+      // 파일명에 기간 자동 반영
+      let filenamePeriod = '전체';
+      if (periodState.type === 'this_week') filenamePeriod = '이번주';
+      else if (periodState.type === 'last_week') filenamePeriod = '지난주';
+      else if (periodState.type === 'this_month') filenamePeriod = '이번달';
+      else if (periodState.type === 'last_month') filenamePeriod = '지난달';
+      else if (periodState.startDate && periodState.endDate) filenamePeriod = `${periodState.startDate}_${periodState.endDate}`;
+
       link.setAttribute('href', url);
-      link.setAttribute('download', `어르신_식생활용품_전달일지_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.setAttribute('download', `어르신_식생활용품_전달일지_${filenamePeriod}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
