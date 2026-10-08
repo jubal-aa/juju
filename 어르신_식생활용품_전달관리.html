@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>어르신 식생활용품 전달 및 안부관리 시스템</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* 기본 인쇄 및 오프라인 대비 스타일 */
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; padding: 0 !important; }
+      .print-border { border: 1px solid #ddd !important; }
+      .shadow-sm, .shadow-md, .shadow-lg { box-shadow: none !important; }
+    }
+    /* 스크롤바 커스텀 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8 font-sans">
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- 상단 헤더 & 안내 -->
+    <header class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+            월~금 정기 배달
+          </span>
+          <span class="text-xs text-slate-500" id="currentDateDisplay"></span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">어르신 식생활용품 전달 & 안부 모니터링 관리시스템</h1>
+        <p class="text-sm text-slate-600 mt-1">종이 서류 대신 모바일/PC에서 바로 입력하고, 일괄 취합 및 엑셀로 다운로드할 수 있습니다.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 no-print">
+        <button onclick="exportToCSV()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm transition shadow-sm active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          엑셀(CSV) 다운로드
+        </button>
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-sm transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          보고서 인쇄
+        </button>
+      </div>
+    </header>
+
+    <!-- 요약 통계 카드 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <span class="text-xs font-medium text-slate-500">전체 누적 전달</span>
+        <div class="text-2xl font-bold text-slate-800 mt-1" id="statTotal">0건</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <span class="text-xs font-medium text-emerald-600">오늘 전달 완료</span>
+        <div class="text-2xl font-bold text-emerald-700 mt-1" id="statToday">0건</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <span class="text-xs font-medium text-amber-600">안부 주의/관찰</span>
+        <div class="text-2xl font-bold text-amber-600 mt-1" id="statWarning">0건</div>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <span class="text-xs font-medium text-rose-600">긴급/개선 요청</span>
+        <div class="text-2xl font-bold text-rose-600 mt-1" id="statDanger">0건</div>
+      </div>
+    </div>
+
+    <!-- 메인 레이아웃: 입력 폼 & 목록 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- 왼쪽: 간편 입력 양식 (폼) -->
+      <div class="lg:col-span-5 no-print">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm sticky top-6">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              전달 내역 입력 & 제출
+            </h2>
+            <span class="text-xs text-slate-400">* 필수 입력</span>
+          </div>
+
+          <form id="deliveryForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+            
+            <!-- 1. 일시 & 어르신 성함 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">전달 일시 *</label>
+                <input type="datetime-local" id="inputDateTime" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">어르신 성함 *</label>
+                <input type="text" id="inputSeniorName" placeholder="예: 김순자 어르신" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+              </div>
+            </div>
+
+            <!-- 2. 품목 카테고리 & 상세 품목명 -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">품목 분류 *</label>
+              <div class="grid grid-cols-4 gap-2 mb-2">
+                <button type="button" onclick="selectCategory('밑반찬')" class="cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 transition text-center" data-cat="밑반찬">밑반찬</button>
+                <button type="button" onclick="selectCategory('빵·제과')" class="cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition text-center" data-cat="빵·제과">빵·간식</button>
+                <button type="button" onclick="selectCategory('국·탕류')" class="cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition text-center" data-cat="국·탕류">국·찌개</button>
+                <button type="button" onclick="selectCategory('생필품·기타')" class="cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition text-center" data-cat="생필품·기타">기타용품</button>
+              </div>
+              <input type="hidden" id="inputCategory" value="밑반찬">
+              <input type="text" id="inputItemDetail" placeholder="상세 품목명 (예: 불고기, 시금치나물, 콩나물국)" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+            </div>
+
+            <!-- 3. 수량 -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">수량 *</label>
+              <div class="flex gap-2">
+                <input type="number" id="inputQuantity" value="1" min="1" required class="w-24 px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                <select id="inputUnit" class="px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white">
+                  <option value="세트">세트</option>
+                  <option value="개">개</option>
+                  <option value="팩">팩</option>
+                  <option value="통">통</option>
+                  <option value="박스">박스</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 4. 당일 어르신 컨디션 체크 -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1.5">당일 어르신 안부·컨디션 체크 *</label>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <label class="condition-card flex items-center gap-2 p-2.5 border-2 border-emerald-500 bg-emerald-50 rounded-xl cursor-pointer transition">
+                  <input type="radio" name="condition" value="양호" checked class="hidden" onchange="updateConditionStyle()">
+                  <span class="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                  <div>
+                    <span class="font-bold text-slate-900 block">🟢 양호</span>
+                    <span class="text-[11px] text-slate-500">안색 좋고 식사 잘하심</span>
+                  </div>
+                </label>
+
+                <label class="condition-card flex items-center gap-2 p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer transition hover:bg-slate-50">
+                  <input type="radio" name="condition" value="보통" class="hidden" onchange="updateConditionStyle()">
+                  <span class="w-3 h-3 rounded-full bg-blue-500 flex-shrink-0"></span>
+                  <div>
+                    <span class="font-bold text-slate-900 block">🔵 보통</span>
+                    <span class="text-[11px] text-slate-500">거동 불편하나 안정적</span>
+                  </div>
+                </label>
+
+                <label class="condition-card flex items-center gap-2 p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer transition hover:bg-slate-50">
+                  <input type="radio" name="condition" value="주의" class="hidden" onchange="updateConditionStyle()">
+                  <span class="w-3 h-3 rounded-full bg-amber-500 flex-shrink-0"></span>
+                  <div>
+                    <span class="font-bold text-slate-900 block">🟡 주의</span>
+                    <span class="text-[11px] text-slate-500">통증/감기/식욕 부진</span>
+                  </div>
+                </label>
+
+                <label class="condition-card flex items-center gap-2 p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer transition hover:bg-slate-50">
+                  <input type="radio" name="condition" value="위험" class="hidden" onchange="updateConditionStyle()">
+                  <span class="w-3 h-3 rounded-full bg-rose-500 flex-shrink-0"></span>
+                  <div>
+                    <span class="font-bold text-slate-900 block">🔴 위험/응급</span>
+                    <span class="text-[11px] text-slate-500">부재/낙상/즉시보고</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- 5. 사진 제출 (스마트폰 촬영/파일 첨부) -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">인증 사진 제출 (전달 모습 또는 물품)</label>
+              <div class="flex items-center gap-3">
+                <label class="flex-1 cursor-pointer flex flex-col items-center justify-center p-3 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-xl text-center transition bg-slate-50 hover:bg-emerald-50/30">
+                  <svg class="w-5 h-5 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span class="text-xs font-medium text-slate-600" id="photoLabel">사진 촬영 또는 파일 선택</span>
+                  <span class="text-[11px] text-slate-400">모바일에서 즉시 카메라 연동</span>
+                  <input type="file" id="inputPhoto" accept="image/*" capture="environment" onchange="handlePhotoUpload(event)" class="hidden">
+                </label>
+                <div id="photoPreviewBox" class="hidden relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 bg-slate-100">
+                  <img id="photoPreview" class="w-full h-full object-cover" alt="미리보기">
+                  <button type="button" onclick="removePhoto()" class="absolute top-0.5 right-0.5 bg-black/60 text-white rounded-full p-0.5 hover:bg-rose-600 transition">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. 개선사항 및 특이사항 -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">개선사항 및 방문 특이사항</label>
+              <textarea id="inputNotes" rows="2" placeholder="예: 무릎 관절 파스 필요하다고 하심 / 다음 주 화요일 병원 방문으로 오전 배달 요청" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
+            </div>
+
+            <!-- 제출 버튼 -->
+            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition active:scale-[0.99] flex items-center justify-center gap-2">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              전달 기록 등록 (제출)
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 일괄 관리 대장 (실시간 누적 테이블) -->
+      <div class="lg:col-span-7 space-y-4">
+        
+        <!-- 검색 및 필터 바 -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3 no-print">
+          <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+            <input type="text" id="searchInput" oninput="renderTable()" placeholder="어르신 성함, 품목 검색..." class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+          <div class="flex items-center gap-1.5 text-xs">
+            <button onclick="setFilter('all')" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-900 text-white transition" data-filter="all">전체</button>
+            <button onclick="setFilter('today')" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-filter="today">오늘</button>
+            <button onclick="setFilter('alert')" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-filter="alert">주의·위험만</button>
+            <button onclick="clearAllData()" class="px-2 py-1.5 text-slate-400 hover:text-rose-500 transition ml-2" title="데이터 초기화">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 일괄 대장 목록 테이블 -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden print-border">
+          <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-base">식생활용품 전달 & 안부 통합 관리대장</h3>
+            <span class="text-xs text-slate-500" id="recordCountText">총 0건 기록</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+              <thead class="bg-slate-50 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-3 py-3 w-12 text-center">사진</th>
+                  <th class="px-3 py-3">일시</th>
+                  <th class="px-3 py-3">성함</th>
+                  <th class="px-3 py-3">품목 및 수량</th>
+                  <th class="px-3 py-3 text-center">컨디션</th>
+                  <th class="px-3 py-3">개선·특이사항</th>
+                  <th class="px-3 py-3 text-center no-print">삭제</th>
+                </tr>
+              </thead>
+              <tbody id="recordTableBody" class="divide-y divide-slate-100 font-medium">
+                <!-- JS에서 동적으로 렌더링 -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="emptyMessage" class="p-8 text-center text-slate-400 text-sm hidden">
+            등록된 전달 기록이 없습니다. 왼쪽 폼에서 새로 입력해 주세요.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 사진 크게보기 모달 -->
+    <div id="imageModal" onclick="closeImageModal()" class="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 hidden no-print">
+      <div class="relative max-w-lg max-h-[85vh] bg-white rounded-2xl overflow-hidden p-2 shadow-2xl" onclick="event.stopPropagation()">
+        <img id="modalImage" class="max-w-full max-h-[75vh] object-contain rounded-xl" alt="제출 사진">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 bg-black/60 text-white rounded-full p-1.5 hover:bg-rose-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 기본 로컬 스토리지 키
+    const STORAGE_KEY = 'ELDERLY_DELIVERY_RECORDS_V1';
+
+    // 기본 샘플 데이터 (처음 실행 시 예시로 표시)
+    const initialSampleData = [
+      {
+        id: 'rec_1',
+        dateTime: new Date(Date.now() - 3600000 * 3).toISOString().slice(0, 16),
+        seniorName: '김옥순 어르신',
+        category: '밑반찬',
+        itemDetail: '소고기미역국, 멸치볶음, 시금치나물',
+        quantity: 1,
+        unit: '세트',
+        condition: '양호',
+        notes: '식사 잘 챙겨 드시고 계시며 안색 밝으심.',
+        photoData: ''
+      },
+      {
+        id: 'rec_2',
+        dateTime: new Date(Date.now() - 3600000 * 2).toISOString().slice(0, 16),
+        seniorName: '박영철 어르신',
+        category: '빵·제과',
+        itemDetail: '단팥빵 2개, 카스텔라 1개, 두유 2팩',
+        quantity: 1,
+        unit: '세트',
+        condition: '주의',
+        notes: '감기 기운이 있어 기침을 자주 하심. 내일 안부 재확인 필요.',
+        photoData: ''
+      },
+      {
+        id: 'rec_3',
+        dateTime: new Date().toISOString().slice(0, 16),
+        seniorName: '이복순 어르신',
+        category: '밑반찬',
+        itemDetail: '청국장, 콩나물무침, 배추김치',
+        quantity: 1,
+        unit: '세트',
+        condition: '보통',
+        notes: '다음 주 수요일에는 보건소 진료로 오후 3시 이후 방문 요청하심.',
+        photoData: ''
+      }
+    ];
+
+    let records = [];
+    let currentFilter = 'all';
+    let currentUploadedPhoto = '';
+
+    // 초기화
+    window.addEventListener('DOMContentLoaded', () => {
+      // 오늘 날짜 및 현재 시간 기본 설정
+      const now = new Date();
+      const localIso = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      document.getElementById('inputDateTime').value = localIso;
+
+      // 헤더 날짜 표시
+      const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+      document.getElementById('currentDateDisplay').textContent = now.toLocaleDateString('ko-KR', options);
+
+      // 데이터 로드
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { records = JSON.parse(saved); } catch (e) { records = initialSampleData; }
+      } else {
+        records = initialSampleData;
+        saveRecords();
+      }
+
+      renderTable();
+      updateStats();
+    });
+
+    function saveRecords() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      updateStats();
+    }
+
+    // 품목 카테고리 선택
+    function selectCategory(cat) {
+      document.getElementById('inputCategory').value = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.dataset.cat === cat) {
+          btn.className = 'cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 transition text-center';
+        } else {
+          btn.className = 'cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition text-center';
+        }
+      });
+    }
+
+    // 컨디션 라디오 버튼 스타일 업데이트
+    function updateConditionStyle() {
+      const selected = document.querySelector('input[name="condition"]:checked').value;
+      const cards = document.querySelectorAll('.condition-card');
+      
+      cards.forEach(card => {
+        const val = card.querySelector('input').value;
+        if (val === selected) {
+          card.classList.remove('border-slate-200', 'bg-white');
+          if (val === '양호') card.classList.add('border-emerald-500', 'bg-emerald-50');
+          if (val === '보통') card.classList.add('border-blue-500', 'bg-blue-50');
+          if (val === '주의') card.classList.add('border-amber-500', 'bg-amber-50');
+          if (val === '위험') card.classList.add('border-rose-500', 'bg-rose-50');
+        } else {
+          card.className = 'condition-card flex items-center gap-2 p-2.5 border-2 border-slate-200 rounded-xl cursor-pointer transition hover:bg-slate-50 bg-white';
+        }
+      });
+    }
+
+    // 사진 업로드 핸들러
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        // 이미지 용량 압축 (Canvas 이용)
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const maxDim = 800; // 최대 800px로 리사이징하여 로컬스토리지 절약
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height && width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          currentUploadedPhoto = canvas.toDataURL('image/jpeg', 0.7);
+          document.getElementById('photoPreview').src = currentUploadedPhoto;
+          document.getElementById('photoPreviewBox').classList.remove('hidden');
+          document.getElementById('photoLabel').textContent = '사진 등록 완료';
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removePhoto() {
+      currentUploadedPhoto = '';
+      document.getElementById('inputPhoto').value = '';
+      document.getElementById('photoPreviewBox').classList.add('hidden');
+      document.getElementById('photoLabel').textContent = '사진 촬영 또는 파일 선택';
+    }
+
+    // 폼 제출 처리
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const newRecord = {
+        id: 'rec_' + Date.now(),
+        dateTime: document.getElementById('inputDateTime').value,
+        seniorName: document.getElementById('inputSeniorName').value.trim(),
+        category: document.getElementById('inputCategory').value,
+        itemDetail: document.getElementById('inputItemDetail').value.trim(),
+        quantity: parseInt(document.getElementById('inputQuantity').value, 10),
+        unit: document.getElementById('inputUnit').value,
+        condition: document.querySelector('input[name="condition"]:checked').value,
+        notes: document.getElementById('inputNotes').value.trim(),
+        photoData: currentUploadedPhoto
+      };
+
+      records.unshift(newRecord);
+      saveRecords();
+      renderTable();
+
+      // 폼 리셋 (일시는 현재 시간 유지)
+      document.getElementById('inputSeniorName').value = '';
+      document.getElementById('inputItemDetail').value = '';
+      document.getElementById('inputNotes').value = '';
+      removePhoto();
+
+      // 성공 알림 피드백
+      alert(`[${newRecord.seniorName}] 전달 기록이 성공적으로 등록되었습니다.`);
+    }
+
+    // 기록 삭제
+    function deleteRecord(id) {
+      if (confirm('이 기록을 삭제하시겠습니까?')) {
+        records = records.filter(r => r.id !== id);
+        saveRecords();
+        renderTable();
+      }
+    }
+
+    // 필터 변경
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-900 text-white transition';
+        } else {
+          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+        }
+      });
+      renderTable();
+    }
+
+    // 테이블 렌더링
+    function renderTable() {
+      const tbody = document.getElementById('recordTableBody');
+      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      let filtered = records.filter(r => {
+        // 검색어 필터
+        const matchSearch = r.seniorName.toLowerCase().includes(search) || 
+                            r.itemDetail.toLowerCase().includes(search) || 
+                            (r.notes && r.notes.toLowerCase().includes(search));
+        if (!matchSearch) return false;
+
+        // 탭 필터
+        if (currentFilter === 'today') return r.dateTime.startsWith(todayStr);
+        if (currentFilter === 'alert') return r.condition === '주의' || r.condition === '위험';
+        return true;
+      });
+
+      document.getElementById('recordCountText').textContent = `총 ${filtered.length}건 기록`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        document.getElementById('emptyMessage').classList.remove('hidden');
+        return;
+      } else {
+        document.getElementById('emptyMessage').classList.add('hidden');
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        // 컨디션 뱃지 스타일
+        let badge = '';
+        if (r.condition === '양호') badge = '<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">🟢 양호</span>';
+        else if (r.condition === '보통') badge = '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">🔵 보통</span>';
+        else if (r.condition === '주의') badge = '<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold animate-pulse">🟡 주의</span>';
+        else if (r.condition === '위험') badge = '<span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold animate-pulse">🔴 위험</span>';
+
+        // 사진 썸네일
+        const photoHtml = r.photoData 
+          ? `<img src="${r.photoData}" onclick="openImageModal('${r.photoData}')" class="w-9 h-9 rounded-lg object-cover cursor-pointer hover:opacity-80 border border-slate-200 transition shadow-sm" alt="사진">`
+          : `<span class="inline-block w-9 h-9 rounded-lg bg-slate-100 text-slate-300 flex items-center justify-center text-[10px]">무</span>`;
+
+        // 날짜 포맷
+        const dateFormatted = r.dateTime ? r.dateTime.replace('T', ' ') : '-';
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="px-3 py-2.5 text-center">${photoHtml}</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-slate-500">${dateFormatted}</td>
+            <td class="px-3 py-2.5 font-bold text-slate-900 whitespace-nowrap">${r.seniorName}</td>
+            <td class="px-3 py-2.5">
+              <span class="inline-block text-[11px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mr-1">${r.category}</span>
+              <span class="text-slate-800">${r.itemDetail}</span>
+              <span class="text-slate-400 font-normal">(${r.quantity}${r.unit})</span>
+            </td>
+            <td class="px-3 py-2.5 text-center whitespace-nowrap">${badge}</td>
+            <td class="px-3 py-2.5 text-slate-600 max-w-xs truncate" title="${r.notes || ''}">${r.notes || '<span class="text-slate-300">-</span>'}</td>
+            <td class="px-3 py-2.5 text-center no-print">
+              <button onclick="deleteRecord('${r.id}')" class="p-1 text-slate-400 hover:text-rose-600 rounded transition" title="삭제">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 상단 통계 업데이트
+    function updateStats() {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      document.getElementById('statTotal').textContent = records.length + '건';
+      document.getElementById('statToday').textContent = records.filter(r => r.dateTime.startsWith(todayStr)).length + '건';
+      document.getElementById('statWarning').textContent = records.filter(r => r.condition === '주의').length + '건';
+      document.getElementById('statDanger').textContent = records.filter(r => r.condition === '위험').length + '건';
+    }
+
+    // 엑셀(CSV) 내보내기 (UTF-8 BOM으로 한글 깨짐 방지)
+    function exportToCSV() {
+      if (records.length === 0) {
+        alert('다운로드할 데이터가 없습니다.');
+        return;
+      }
+
+      const headers = ['일시', '어르신 성함', '품목 분류', '상세 품목명', '수량', '단위', '컨디션 체크', '개선 및 특이사항', '사진첨부여부'];
+      const rows = records.map(r => [
+        `"${r.dateTime.replace('T', ' ')}"`,
+        `"${r.seniorName}"`,
+        `"${r.category}"`,
+        `"${r.itemDetail.replace(/"/g, '""')}"`,
+        r.quantity,
+        `"${r.unit}"`,
+        `"${r.condition}"`,
+        `"${(r.notes || '').replace(/"/g, '""')}"`,
+        `"${r.photoData ? '제출완료' : '미제출'}"`
+      ]);
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `어르신_식생활용품_전달일지_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // 사진 모달 열기/닫기
+    function openImageModal(src) {
+      document.getElementById('modalImage').src = src;
+      document.getElementById('imageModal').classList.remove('hidden');
+    }
+    function closeImageModal() {
+      document.getElementById('imageModal').classList.add('hidden');
+    }
+
+    // 전체 데이터 초기화
+    function clearAllData() {
+      if (confirm('모든 기록을 삭제하고 초기화하시겠습니까? (되돌릴 수 없습니다)')) {
+        records = [];
+        saveRecords();
+        renderTable();
+      }
+    }
+  </script>
+</body>
+</html>
