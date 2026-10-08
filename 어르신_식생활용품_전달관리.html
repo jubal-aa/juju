@@ -32,7 +32,7 @@
           <span class="text-xs text-slate-500" id="currentDateDisplay"></span>
         </div>
         <h1 class="text-2xl font-bold text-slate-900 tracking-tight">어르신 식생활용품 전달 & 안부 모니터링 관리시스템</h1>
-        <p class="text-sm text-slate-600 mt-1">종이 서류 대신 모바일/PC에서 바로 입력하고, 일괄 취합 및 엑셀로 다운로드할 수 있습니다.</p>
+        <p class="text-sm text-slate-600 mt-1">종이 서류 대신 모바일/PC에서 바로 입력하고, 성함·주소·전화번호·물품별로 빠르고 편리하게 검색·일괄 관리하세요.</p>
       </div>
       <div class="flex flex-wrap items-center gap-2 no-print">
         <button onclick="exportToCSV()" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm transition shadow-sm active:scale-95">
@@ -94,9 +94,21 @@
               </div>
             </div>
 
-            <!-- 2. 품목 카테고리 & 상세 품목명 -->
+            <!-- 2. 어르신 연락처 & 주소 (검색 및 상세관리 지원) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">어르신 연락처 (전화번호)</label>
+                <input type="tel" id="inputPhone" placeholder="예: 010-1234-5678" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">어르신 댁 주소</label>
+                <input type="text" id="inputAddress" placeholder="예: 희망동 101동 203호" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+              </div>
+            </div>
+
+            <!-- 3. 품목 카테고리 & 상세 품목명 -->
             <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">품목 분류 *</label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">후원 품목 분류 *</label>
               <div class="grid grid-cols-4 gap-2 mb-2">
                 <button type="button" onclick="selectCategory('밑반찬')" class="cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-emerald-500 bg-emerald-50 text-emerald-700 transition text-center" data-cat="밑반찬">밑반찬</button>
                 <button type="button" onclick="selectCategory('빵·제과')" class="cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition text-center" data-cat="빵·제과">빵·간식</button>
@@ -104,10 +116,10 @@
                 <button type="button" onclick="selectCategory('생필품·기타')" class="cat-btn py-1.5 px-2 text-xs font-medium rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition text-center" data-cat="생필품·기타">기타용품</button>
               </div>
               <input type="hidden" id="inputCategory" value="밑반찬">
-              <input type="text" id="inputItemDetail" placeholder="상세 품목명 (예: 불고기, 시금치나물, 콩나물국)" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+              <input type="text" id="inputItemDetail" placeholder="상세 후원물품명 (예: 소불고기, 배추김치, 단팥빵, 롤케이크)" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
             </div>
 
-            <!-- 3. 수량 -->
+            <!-- 4. 수량 -->
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">수량 *</label>
               <div class="flex gap-2">
@@ -122,7 +134,7 @@
               </div>
             </div>
 
-            <!-- 4. 당일 어르신 컨디션 체크 -->
+            <!-- 5. 당일 어르신 컨디션 체크 -->
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1.5">당일 어르신 안부·컨디션 체크 *</label>
               <div class="grid grid-cols-2 gap-2 text-xs">
@@ -164,7 +176,7 @@
               </div>
             </div>
 
-            <!-- 5. 사진 제출 (스마트폰 촬영/파일 첨부) -->
+            <!-- 6. 사진 제출 (스마트폰 촬영/파일 첨부) -->
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">인증 사진 제출 (전달 모습 또는 물품)</label>
               <div class="flex items-center gap-3">
@@ -183,10 +195,10 @@
               </div>
             </div>
 
-            <!-- 6. 개선사항 및 특이사항 -->
+            <!-- 7. 개선사항 및 특이사항 -->
             <div>
               <label class="block text-xs font-semibold text-slate-700 mb-1">개선사항 및 방문 특이사항</label>
-              <textarea id="inputNotes" rows="2" placeholder="예: 무릎 관절 파스 필요하다고 하심 / 다음 주 화요일 병원 방문으로 오전 배달 요청" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
+              <textarea id="inputNotes" rows="2" placeholder="예: 무릎 관절 파스 필요하다고 하심 / 단팥빵을 특히 좋아하심 / 다음 주 화요일 오전 배달 요청" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"></textarea>
             </div>
 
             <!-- 제출 버튼 -->
@@ -198,20 +210,42 @@
         </div>
       </div>
 
-      <!-- 오른쪽: 일괄 관리 대장 (실시간 누적 테이블) -->
+      <!-- 오른쪽: 일괄 관리 대장 (실시간 누적 테이블 및 다각도 검색) -->
       <div class="lg:col-span-7 space-y-4">
         
-        <!-- 검색 및 필터 바 -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-3 no-print">
-          <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-            <input type="text" id="searchInput" oninput="renderTable()" placeholder="어르신 성함, 품목 검색..." class="w-full px-3 py-1.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        <!-- 🔍 다각도 검색 바 (이름, 주소, 전화번호, 후원물품 전용 필터) -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3 no-print">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <!-- 검색 유형 선택 드롭다운 -->
+            <select id="searchType" onchange="renderTable()" class="px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="all">🔍 전체 통합검색</option>
+              <option value="name">👤 어르신 성함</option>
+              <option value="address">🏠 댁 주소</option>
+              <option value="phone">📞 전화번호</option>
+              <option value="item">📦 후원 물품명</option>
+            </select>
+
+            <!-- 검색 입력창 -->
+            <div class="relative flex-1">
+              <input type="text" id="searchInput" oninput="renderTable()" placeholder="검색어를 입력하세요 (예: 김순자, 101동, 010, 단팥빵)..." class="w-full pl-9 pr-8 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5 text-xs">
-            <button onclick="setFilter('all')" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-900 text-white transition" data-filter="all">전체</button>
-            <button onclick="setFilter('today')" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-filter="today">오늘</button>
-            <button onclick="setFilter('alert')" class="filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-filter="alert">주의·위험만</button>
-            <button onclick="clearAllData()" class="px-2 py-1.5 text-slate-400 hover:text-rose-500 transition ml-2" title="데이터 초기화">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+
+          <!-- 상태별 빠른 필터 버튼 & 데이터 초기화 -->
+          <div class="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-400 font-medium mr-1">보기:</span>
+              <button onclick="setFilter('all')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-900 text-white transition" data-filter="all">전체보기</button>
+              <button onclick="setFilter('today')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-filter="today">오늘</button>
+              <button onclick="setFilter('alert')" class="filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-filter="alert">주의·위험만</button>
+            </div>
+            <button onclick="clearAllData()" class="text-slate-400 hover:text-rose-500 transition flex items-center gap-1" title="데이터 초기화">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              전체 비우기
             </button>
           </div>
         </div>
@@ -219,8 +253,11 @@
         <!-- 일괄 대장 목록 테이블 -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden print-border">
           <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h3 class="font-bold text-slate-800 text-base">식생활용품 전달 & 안부 통합 관리대장</h3>
-            <span class="text-xs text-slate-500" id="recordCountText">총 0건 기록</span>
+            <div>
+              <h3 class="font-bold text-slate-800 text-base">식생활용품 전달 & 안부 통합 관리대장</h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">성함 아래 전화번호와 댁 주소가 함께 표기됩니다.</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 rounded-full text-slate-600" id="recordCountText">총 0건 기록</span>
           </div>
 
           <div class="overflow-x-auto">
@@ -228,12 +265,12 @@
               <thead class="bg-slate-50 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th class="px-3 py-3 w-12 text-center">사진</th>
-                  <th class="px-3 py-3">일시</th>
-                  <th class="px-3 py-3">성함</th>
-                  <th class="px-3 py-3">품목 및 수량</th>
-                  <th class="px-3 py-3 text-center">컨디션</th>
+                  <th class="px-3 py-3 whitespace-nowrap">일시</th>
+                  <th class="px-3 py-3 min-w-[130px]">어르신 정보<br><span class="text-[10px] text-slate-400 font-normal">(성함 / 연락처 / 주소)</span></th>
+                  <th class="px-3 py-3 min-w-[140px]">후원 물품 및 수량</th>
+                  <th class="px-3 py-3 text-center whitespace-nowrap">컨디션</th>
                   <th class="px-3 py-3">개선·특이사항</th>
-                  <th class="px-3 py-3 text-center no-print">삭제</th>
+                  <th class="px-3 py-3 text-center no-print whitespace-nowrap">삭제</th>
                 </tr>
               </thead>
               <tbody id="recordTableBody" class="divide-y divide-slate-100 font-medium">
@@ -243,7 +280,7 @@
           </div>
 
           <div id="emptyMessage" class="p-8 text-center text-slate-400 text-sm hidden">
-            등록된 전달 기록이 없습니다. 왼쪽 폼에서 새로 입력해 주세요.
+            조건에 맞는 전달 기록이 없습니다. 검색어를 변경하거나 새로운 기록을 입력해 주세요.
           </div>
         </div>
 
@@ -264,15 +301,17 @@
   </div>
 
   <script>
-    // 기본 로컬 스토리지 키
-    const STORAGE_KEY = 'ELDERLY_DELIVERY_RECORDS_V1';
+    // 기본 로컬 스토리지 키 (새 필드 호환을 위해 V2로 업데이트)
+    const STORAGE_KEY = 'ELDERLY_DELIVERY_RECORDS_V2';
 
-    // 기본 샘플 데이터 (처음 실행 시 예시로 표시)
+    // 기본 샘플 데이터 (성함, 전화번호, 주소, 물품이 포함된 실무 예시)
     const initialSampleData = [
       {
         id: 'rec_1',
         dateTime: new Date(Date.now() - 3600000 * 3).toISOString().slice(0, 16),
         seniorName: '김옥순 어르신',
+        phone: '010-2345-6789',
+        address: '행복동 102동 405호',
         category: '밑반찬',
         itemDetail: '소고기미역국, 멸치볶음, 시금치나물',
         quantity: 1,
@@ -285,6 +324,8 @@
         id: 'rec_2',
         dateTime: new Date(Date.now() - 3600000 * 2).toISOString().slice(0, 16),
         seniorName: '박영철 어르신',
+        phone: '010-9876-5432',
+        address: '희망로 45번길 12 1층',
         category: '빵·제과',
         itemDetail: '단팥빵 2개, 카스텔라 1개, 두유 2팩',
         quantity: 1,
@@ -297,8 +338,10 @@
         id: 'rec_3',
         dateTime: new Date().toISOString().slice(0, 16),
         seniorName: '이복순 어르신',
+        phone: '010-5555-4321',
+        address: '평화마을 3단지 301호',
         category: '밑반찬',
-        itemDetail: '청국장, 콩나물무침, 배추김치',
+        itemDetail: '청국장, 콩나물무침, 배추김치, 단팥빵',
         quantity: 1,
         unit: '세트',
         condition: '보통',
@@ -322,10 +365,22 @@
       const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
       document.getElementById('currentDateDisplay').textContent = now.toLocaleDateString('ko-KR', options);
 
-      // 데이터 로드
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try { records = JSON.parse(saved); } catch (e) { records = initialSampleData; }
+      // 데이터 로드 (기존 V1 데이터가 있을 경우 자동 마이그레이션)
+      const savedV2 = localStorage.getItem(STORAGE_KEY);
+      const savedV1 = localStorage.getItem('ELDERLY_DELIVERY_RECORDS_V1');
+
+      if (savedV2) {
+        try { records = JSON.parse(savedV2); } catch (e) { records = initialSampleData; }
+      } else if (savedV1) {
+        try {
+          const oldList = JSON.parse(savedV1);
+          records = oldList.map(r => ({
+            ...r,
+            phone: r.phone || '',
+            address: r.address || ''
+          }));
+          saveRecords();
+        } catch (e) { records = initialSampleData; }
       } else {
         records = initialSampleData;
         saveRecords();
@@ -382,7 +437,7 @@
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          const maxDim = 800; // 최대 800px로 리사이징하여 로컬스토리지 절약
+          const maxDim = 800;
           let width = img.width;
           let height = img.height;
 
@@ -424,6 +479,8 @@
         id: 'rec_' + Date.now(),
         dateTime: document.getElementById('inputDateTime').value,
         seniorName: document.getElementById('inputSeniorName').value.trim(),
+        phone: document.getElementById('inputPhone').value.trim(),
+        address: document.getElementById('inputAddress').value.trim(),
         category: document.getElementById('inputCategory').value,
         itemDetail: document.getElementById('inputItemDetail').value.trim(),
         quantity: parseInt(document.getElementById('inputQuantity').value, 10),
@@ -439,6 +496,8 @@
 
       // 폼 리셋 (일시는 현재 시간 유지)
       document.getElementById('inputSeniorName').value = '';
+      document.getElementById('inputPhone').value = '';
+      document.getElementById('inputAddress').value = '';
       document.getElementById('inputItemDetail').value = '';
       document.getElementById('inputNotes').value = '';
       removePhoto();
@@ -461,28 +520,70 @@
       currentFilter = filter;
       document.querySelectorAll('.filter-btn').forEach(btn => {
         if (btn.dataset.filter === filter) {
-          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-900 text-white transition';
+          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-900 text-white transition';
         } else {
-          btn.className = 'filter-btn px-3 py-1.5 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+          btn.className = 'filter-btn px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
         }
       });
       renderTable();
     }
 
-    // 테이블 렌더링
+    // 검색어 비우기
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      renderTable();
+    }
+
+    // 다각도 스마트 검색 및 테이블 렌더링
     function renderTable() {
       const tbody = document.getElementById('recordTableBody');
-      const search = document.getElementById('searchInput').value.trim().toLowerCase();
+      const searchInput = document.getElementById('searchInput');
+      const searchVal = searchInput.value.trim().toLowerCase();
+      const searchCleanNum = searchVal.replace(/[^0-9]/g, ''); // 하이픈 제외 숫자만
+      const searchType = document.getElementById('searchType').value;
       const todayStr = new Date().toISOString().slice(0, 10);
 
-      let filtered = records.filter(r => {
-        // 검색어 필터
-        const matchSearch = r.seniorName.toLowerCase().includes(search) || 
-                            r.itemDetail.toLowerCase().includes(search) || 
-                            (r.notes && r.notes.toLowerCase().includes(search));
-        if (!matchSearch) return false;
+      // 검색창 지우기 X버튼 표시 여부
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (searchVal.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
 
-        // 탭 필터
+      let filtered = records.filter(r => {
+        // 검색 필터 적용
+        if (searchVal) {
+          const name = (r.seniorName || '').toLowerCase();
+          const addr = (r.address || '').toLowerCase();
+          const phone = (r.phone || '').toLowerCase();
+          const phoneClean = (r.phone || '').replace(/[^0-9]/g, '');
+          const cat = (r.category || '').toLowerCase();
+          const item = (r.itemDetail || '').toLowerCase();
+          const note = (r.notes || '').toLowerCase();
+
+          if (searchType === 'name') {
+            if (!name.includes(searchVal)) return false;
+          } else if (searchType === 'address') {
+            if (!addr.includes(searchVal)) return false;
+          } else if (searchType === 'phone') {
+            const matchRaw = phone.includes(searchVal);
+            const matchClean = searchCleanNum && phoneClean.includes(searchCleanNum);
+            if (!matchRaw && !matchClean) return false;
+          } else if (searchType === 'item') {
+            if (!item.includes(searchVal) && !cat.includes(searchVal)) return false;
+          } else {
+            // 전체 통합 검색 (이름, 주소, 전화번호, 품목, 비고)
+            const matchName = name.includes(searchVal);
+            const matchAddr = addr.includes(searchVal);
+            const matchPhone = phone.includes(searchVal) || (searchCleanNum && phoneClean.includes(searchCleanNum));
+            const matchItem = item.includes(searchVal) || cat.includes(searchVal);
+            const matchNote = note.includes(searchVal);
+            if (!matchName && !matchAddr && !matchPhone && !matchItem && !matchNote) return false;
+          }
+        }
+
+        // 탭 필터 (전체 / 오늘 / 주의·위험)
         if (currentFilter === 'today') return r.dateTime.startsWith(todayStr);
         if (currentFilter === 'alert') return r.condition === '주의' || r.condition === '위험';
         return true;
@@ -517,12 +618,22 @@
         return `
           <tr class="hover:bg-slate-50/80 transition">
             <td class="px-3 py-2.5 text-center">${photoHtml}</td>
-            <td class="px-3 py-2.5 whitespace-nowrap text-slate-500">${dateFormatted}</td>
-            <td class="px-3 py-2.5 font-bold text-slate-900 whitespace-nowrap">${r.seniorName}</td>
+            <td class="px-3 py-2.5 whitespace-nowrap text-slate-500 font-mono text-[11px]">${dateFormatted}</td>
             <td class="px-3 py-2.5">
-              <span class="inline-block text-[11px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded mr-1">${r.category}</span>
-              <span class="text-slate-800">${r.itemDetail}</span>
-              <span class="text-slate-400 font-normal">(${r.quantity}${r.unit})</span>
+              <div class="font-bold text-slate-900 text-sm">${r.seniorName}</div>
+              <div class="text-[11px] text-emerald-700 font-mono flex items-center gap-1 mt-0.5">
+                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                ${r.phone || '<span class="text-slate-300 font-sans">연락처 없음</span>'}
+              </div>
+              <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5 truncate max-w-[180px]" title="${r.address || ''}">
+                <svg class="w-3 h-3 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                ${r.address || '<span class="text-slate-300">주소 미입력</span>'}
+              </div>
+            </td>
+            <td class="px-3 py-2.5">
+              <span class="inline-block text-[11px] font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded mb-1">${r.category}</span>
+              <div class="text-slate-900 font-medium">${r.itemDetail}</div>
+              <div class="text-slate-400 font-normal text-[11px]">${r.quantity} ${r.unit}</div>
             </td>
             <td class="px-3 py-2.5 text-center whitespace-nowrap">${badge}</td>
             <td class="px-3 py-2.5 text-slate-600 max-w-xs truncate" title="${r.notes || ''}">${r.notes || '<span class="text-slate-300">-</span>'}</td>
@@ -545,17 +656,19 @@
       document.getElementById('statDanger').textContent = records.filter(r => r.condition === '위험').length + '건';
     }
 
-    // 엑셀(CSV) 내보내기 (UTF-8 BOM으로 한글 깨짐 방지)
+    // 엑셀(CSV) 내보내기 (주소, 전화번호 포함 & UTF-8 BOM 한글 깨짐 방지)
     function exportToCSV() {
       if (records.length === 0) {
         alert('다운로드할 데이터가 없습니다.');
         return;
       }
 
-      const headers = ['일시', '어르신 성함', '품목 분류', '상세 품목명', '수량', '단위', '컨디션 체크', '개선 및 특이사항', '사진첨부여부'];
+      const headers = ['일시', '어르신 성함', '전화번호', '주소', '품목 분류', '상세 품목명', '수량', '단위', '컨디션 체크', '개선 및 특이사항', '사진첨부여부'];
       const rows = records.map(r => [
         `"${r.dateTime.replace('T', ' ')}"`,
         `"${r.seniorName}"`,
+        `"${r.phone || ''}"`,
+        `"${(r.address || '').replace(/"/g, '""')}"`,
         `"${r.category}"`,
         `"${r.itemDetail.replace(/"/g, '""')}"`,
         r.quantity,
